@@ -1,0 +1,80 @@
+<Windows.h>
+
+#define WallArray 0x469124
+#define ModelNode 0x1ACB7D4
+bool SK = false;
+bool TagosPader = false;
+bool Multo = false;
+void RCC(void)
+{
+    DWORD Wall = *(DWORD *)(WallArray + 0xA);
+    if (GetAsyncKeyState(VK_F1) & 1) TagosPader = (!TagosPader);
+    if (TagosPader)
+    {
+        memcpy((PVOID)(Wall + 0xA4), (PBYTE)"\x00\x00\x00\x00\x00\x00", 6);
+    }
+    else
+    {
+        memcpy((PVOID)(Wall + 0xA4), (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);
+    }
+    if (GetAsyncKeyState(VK_F2) & 1) Multo = (!Multo);
+    if(Multo)
+    {
+        *(DWORD*)(Wall + 0xB8) = 0xE;
+    }
+    else
+    {
+    *(DWORD*)(Wall + 0xB8) = 5;
+    }
+    DWORD CShell = (DWORD)GetModuleHandleA("CShell.dll");
+    DWORD pNodeMgr = *(DWORD*)(CShell + ModelNode);
+        if (pNodeMgr)
+        {
+            if (pNodeMgr != 0)
+            {
+                for (int i = 0; i < 89; i++)
+                {
+                    for (int x = 0; x < 3; x++)
+                    {
+                        if (GetAsyncKeyState(VK_F9) & 1) SK = (!SK);
+                        if (SK)
+                        {
+                            *(float*)((pNodeMgr + 0x38 + x * 4) + (i * 0x9c)) = 110;
+                        }
+                        else
+                        {
+                            *(float*)((pNodeMgr + 0x38) + (i * 0x9c)) = 18;
+                        }
+                    }
+                }
+            }
+        }
+}
+bool Ready2Hook()
+{
+    if (GetModuleHandleA("CShell.dll") != NULL && GetModuleHandleA("ClientFx.fxd") != NULL)
+        return 1;
+    return 0;
+}
+void HackEngine()
+{
+    while (!Ready2Hook())
+        Sleep(200);
+
+    while (true)
+    {
+        RCC();
+    }
+}
+extern "C" __declspec(dllexport) BOOL WINAPI DllMain(HMODULE hDLL, DWORD dwReason, LPVOID lpvRe)
+{
+    if (dwReason == DLL_PROCESS_ATTACH)
+    {
+        DisableThreadLibraryCalls(hDLL);
+        MessageBoxA(0, "RCC OF RAML \n "
+                    "Activated"
+                 "\n", "RCC Update 2", 0);
+        CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)HackEngine, hDLL, NULL, NULL);
+    }
+    return true;
+}
